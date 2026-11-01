@@ -1,0 +1,479 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Daily Assignment Board</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<style id="app-css">
+/* Layout: wall board for a 16:9 TV. Header carries day, date, clock and headcount; physicians sit in equal room cards; the nursing team strip and on-call line follow. White with Claude orange; adding #dark to the link switches to a dark version. */
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #fdebe2;
+  --fg: #2a1a12;
+  --muted: #7a5b4d;
+  --line: #f0d3c3;
+  --accent: #d97757;
+  --accent-strong: #bf5530;
+  --accent-ink: #ffffff;
+  --warn: #7a4a00;
+  --warn-bg: #fff0c2;
+  --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --f-body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+:root[data-board="dark"] {
+  --bg: #1b120e;
+  --surface: #26190f;
+  --surface-2: #3a2418;
+  --fg: #fbeee6;
+  --muted: #c4a392;
+  --line: #4d3224;
+  --accent: #e8845f;
+  --accent-strong: #f09a76;
+  --accent-ink: #2a1208;
+  --warn: #f2c14b;
+  --warn-bg: #3a2c0b;
+  color-scheme: dark;
+}
+html { font-size: clamp(14px, 1.2vw, 30px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 400 1rem/1.35 var(--f-body);
+  padding-block: 1.6rem;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  min-height: 100vh;
+  box-sizing: border-box;
+  border-top: .5rem solid var(--accent);
+}
+#app { display: flex; flex-direction: column; gap: 1.7rem; }
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 1rem 2rem; }
+.eyebrow { font: 600 .95rem/1 var(--f-body); letter-spacing: .18em; text-transform: uppercase; color: var(--accent-strong); }
+.day { margin: .45rem 0 0; font: 700 7.2rem/.9 var(--f-display); letter-spacing: -.01em; overflow-wrap: anywhere; }
+.date { margin-top: .7rem; font: 500 2.1rem/1.1 var(--f-body); color: var(--muted); }
+.viewing { margin-left: .8rem; font-size: 1rem; letter-spacing: .1em; text-transform: uppercase; color: var(--warn); }
+.side { display: flex; align-items: flex-end; gap: 2rem; }
+.clockbox { display: flex; flex-direction: column; align-items: flex-end; gap: .45rem; }
+.clock { font: 600 5rem/.9 var(--f-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.clock .sec { font-size: .55em; color: var(--muted); }
+.clock .ap { margin-left: .25em; font-size: .45em; color: var(--accent-strong); }
+.clock-l { font: 600 .85rem/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.count { display: flex; flex-direction: column; align-items: center; gap: .3rem; min-width: 9rem; padding: .7rem 1.3rem .8rem; border: 2px solid var(--accent); border-radius: 1rem; }
+.count .num { font: 700 4.2rem/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.count .lbl { font: 600 .85rem/1.1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); text-align: center; }
+.sec { margin: 0 0 .85rem; font: 600 .95rem/1 var(--f-body); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.room { display: flex; flex-direction: column; justify-content: space-between; gap: 1.2rem; min-width: 0; padding: 1.1rem 1.2rem 1.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: .9rem; }
+.room--lead { border-color: var(--accent); }
+.room-n { font: 700 1.7rem/1 var(--f-display); letter-spacing: .05em; text-transform: uppercase; }
+.room-s { display: block; margin-top: .3rem; font-size: .95rem; color: var(--muted); }
+.who { display: flex; align-items: center; gap: .9rem; min-width: 0; }
+.ring { flex: none; display: grid; place-items: center; width: 3.6rem; height: 3.6rem; box-sizing: border-box; border: .22rem solid var(--accent); border-radius: 50%; font: 700 1.8rem/1 var(--f-display); color: var(--accent-strong); }
+.nm { min-width: 0; font: 600 2.5rem/1.05 var(--f-display); overflow-wrap: anywhere; }
+.rep { align-self: flex-start; padding: .25rem .7rem; border-radius: 99px; background: var(--warn-bg); color: var(--warn); font: 600 .9rem/1.2 var(--f-body); letter-spacing: .06em; text-transform: uppercase; }
+.rep span { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.team { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem 1.2rem; }
+.role { min-width: 0; padding-top: .7rem; border-top: 2px solid var(--line); }
+.role-n { font: 600 .9rem/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.role-w { margin-top: .4rem; font: 600 1.9rem/1.1 var(--f-display); overflow-wrap: anywhere; }
+.role .rep { margin-top: .5rem; }
+.oncall { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem 1rem; }
+.oncall .sec { margin: 0; }
+.pill { display: inline-block; padding: .35rem 1rem; border-radius: 99px; background: var(--surface-2); font: 600 1.6rem/1.1 var(--f-display); }
+.note { padding: .75rem 1.2rem; border: 1px solid var(--warn); border-radius: .7rem; background: var(--warn-bg); color: var(--warn); font: 600 1.5rem/1.25 var(--f-body); }
+.empty { padding: .4rem 0; font-size: 1.4rem; color: var(--muted); }
+.wk { font: 700 3.4rem/1 var(--f-display); margin-bottom: .4rem; }
+
+.fab { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 30; padding: 10px 18px; border: 1px solid var(--line); border-radius: 99px; background: var(--surface-2); color: var(--fg); font: 600 15px/1 var(--f-body); opacity: .55; cursor: pointer; }
+.fab--local { opacity: .3; }
+.fab:hover, .fab:focus-visible { opacity: 1; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; max-height: 88vh; overflow: auto; box-sizing: border-box; background: var(--surface); border-top: 2px solid var(--accent); padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); font-size: 16px; }
+.sheet-in { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.sheet h3 { margin: 6px 0 0; font: 600 13px/1 var(--f-body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sheet label { display: block; margin-bottom: 5px; font: 500 14px/1.2 var(--f-body); color: var(--muted); }
+.sheet label span { color: var(--fg); font-weight: 600; }
+.sheet input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font: 400 16px/1.2 var(--f-body); }
+.sheet .hint { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.sheet hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 8px 0 2px; }
+.upmsg { margin-top: 6px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+.prev { max-height: 220px; overflow: auto; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); font-size: 13px; line-height: 1.55; }
+.prev b { color: var(--accent-strong); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.btn { padding: 11px 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--fg); font: 600 15px/1 var(--f-body); cursor: pointer; }
+.btn--main { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-ink); }
+#ed-status, #up-status { font-size: 14px; color: var(--muted); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+@media (max-width: 700px) {
+  .day { font-size: 4rem; }
+  .date { font-size: 1.4rem; }
+  .clock { font-size: 3.2rem; }
+  .count .num { font-size: 2.8rem; }
+  .nm { font-size: 2rem; }
+  .side { gap: 1rem; flex-wrap: wrap; }
+}
+</style>
+<div id="app"></div>
+<div id="tools"></div>
+<script id="state" type="application/json">{"physicians": {"2026-10-25": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-10-26": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-10-27": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-10-28": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-10-29": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-11-01": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-11-02": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-11-03": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-11-04": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-11-05": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-11-08": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-11-09": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-11-10": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-11-11": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-11-12": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-11-15": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-11-16": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}, "2026-11-17": {"ref": "Dr. Fatma", "cr1": "Dr. Aisha", "cr2": "Dr. Adil", "chamber": "Dr. Salha"}, "2026-11-18": {"ref": "Dr. Adil", "cr1": "Dr. Aisha", "cr2": "Dr. Salha", "chamber": "Dr. Fatma"}, "2026-11-19": {"ref": "Dr. Salha", "cr1": "Dr. Aisha", "cr2": "Dr. Fatma", "chamber": "Dr. Adil"}}, "staff": {"2026-11-01": {"roles": {"Attendant": "Asma Al Harthi", "Team leader": "Hassan Al Yusufi", "Treatment": "Mohammed Al Omari", "Operator": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori"}, "onCall": ["Mohammed Al Omari", "Aisha Al Khiary"]}, "2026-11-02": {"roles": {"Attendant": "Hassan Al Yusufi", "Assessment": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-03": {"roles": {"Team leader": "Asma Al Harthi", "Operator": "Hassan Al Yusufi", "Assessment": "Mohammed Al Omari", "Attendant": "Aisha Al Khiary", "Treatment": "Fatima Al Masroori"}, "onCall": ["Mohammed Al Omari", "Asma Al Harthi"]}, "2026-11-04": {"roles": {"Attendant": "Mohammed Al Omari", "Assessment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-05": {"roles": {"Team leader": "Asma Al Harthi", "Attendant": "Hassan Al Yusufi", "Operator": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori"}, "onCall": ["Aisha Al Khiary", "Hassan Al Yusufi"]}, "2026-11-06": {"roles": {}, "onCall": ["Salim Al Habsi", "Mohammed Al Omari"]}, "2026-11-07": {"roles": {}, "onCall": ["Hassan Al Yusufi", "Fatima Al Masroori"]}, "2026-11-08": {"roles": {"Team leader": "Asma Al Harthi", "Help": "Hassan Al Yusufi", "Operator": "Mohammed Al Omari", "Attendant": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori"}, "onCall": ["Hassan Al Yusufi", "Asma Al Harthi"]}, "2026-11-09": {"roles": {"Attendant": "Asma Al Harthi", "Team leader": "Hassan Al Yusufi", "Treatment": "Mohammed Al Omari", "Assessment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori"}, "onCall": ["Asma Al Harthi", "Mohammed Al Omari"]}, "2026-11-10": {"roles": {"Team leader": "Asma Al Harthi", "Treatment": "Hassan Al Yusufi", "Attendant": "Mohammed Al Omari", "Operator": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-11": {"roles": {"Team leader": "Asma Al Harthi", "Attendant": "Hassan Al Yusufi", "Assessment": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori"}, "onCall": ["Aisha Al Khiary", "Asma Al Harthi"]}, "2026-11-12": {"roles": {"Team leader": "Asma Al Harthi", "Operator": "Hassan Al Yusufi", "Attendant": "Mohammed Al Omari & Aisha Al Khiary", "Assessment": "Fatima Al Masroori"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-13": {"roles": {}, "onCall": ["Mohammed Al Omari", "Aisha Al Khiary"]}, "2026-11-14": {"roles": {}, "onCall": ["Hassan Al Yusufi", "Asma Al Harthi"]}, "2026-11-15": {"roles": {"Team leader": "Asma Al Harthi", "Attendant": "Hassan Al Yusufi", "Help": "Mohammed Al Omari", "Operator": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori", "Treatment": "Salim Al Habsi"}, "onCall": ["Salim Al Habsi", "Aisha Al Khiary"]}, "2026-11-16": {"roles": {"Team leader": "Asma Al Harthi", "Help": "Hassan Al Yusufi", "Treatment": "Mohammed Al Omari", "Attendant": "Aisha Al Khiary", "Operator": "Fatima Al Masroori", "Assessment": "Salim Al Habsi"}, "onCall": ["Asma Al Harthi", "Hassan Al Yusufi"]}, "2026-11-17": {"roles": {"Attendant": "Asma Al Harthi", "Team leader": "Hassan Al Yusufi", "Help": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori", "Operator": "Salim Al Habsi"}, "onCall": ["Mohammed Al Omari", "Hassan Al Yusufi"]}, "2026-11-18": {"roles": {"Team leader": "Asma Al Harthi", "Help": "Hassan Al Yusufi", "Attendant": "Mohammed Al Omari", "Assessment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori", "Treatment": "Salim Al Habsi"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-19": {"roles": {"Team leader": "Asma Al Harthi", "Help": "Hassan Al Yusufi", "Operator": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori", "Attendant": "Salim Al Habsi"}, "onCall": ["Aisha Al Khiary", "Mohammed Al Omari"]}, "2026-11-20": {"roles": {}, "onCall": ["Asma Al Harthi", "Mohammed Al Omari"]}, "2026-11-21": {"roles": {}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-22": {"roles": {"Team leader": "Hassan Al Yusufi", "Attendant": "Mohammed Al Omari", "Assessment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori", "Treatment": "Salim Al Habsi"}, "onCall": ["Asma Al Harthi", "Aisha Al Khiary"]}, "2026-11-23": {"roles": {"Team leader": "Hassan Al Yusufi", "Treatment": "Mohammed Al Omari", "Operator": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori", "Attendant": "Salim Al Habsi"}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-24": {"roles": {"Team leader": "Hassan Al Yusufi", "Operator": "Mohammed Al Omari", "Attendant": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori & Salim Al Habsi"}, "onCall": ["Mohammed Al Omari", "Fatima Al Masroori"]}, "2026-11-25": {"roles": {"Attendant": "Hassan Al Yusufi", "Help": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Operator": "Fatima Al Masroori", "Assessment": "Salim Al Habsi"}, "onCall": ["Asma Al Harthi", "Hassan Al Yusufi"]}, "2026-11-26": {"roles": {"Team leader": "Hassan Al Yusufi", "Attendant": "Mohammed Al Omari", "Treatment": "Aisha Al Khiary", "Assessment": "Fatima Al Masroori", "Operator": "Salim Al Habsi"}, "onCall": ["Aisha Al Khiary", "Mohammed Al Omari"]}, "2026-11-27": {"roles": {}, "onCall": ["Hassan Al Yusufi", "Salim Al Habsi"]}, "2026-11-28": {"roles": {}, "onCall": ["Mohammed Al Omari", "Aisha Al Khiary"]}}, "overrides": {}, "people": ["Dr. Adil", "Dr. Salha", "Dr. Fatma", "Dr. Aisha", "Asma Al Harthi", "Hassan Al Yusufi", "Mohammed Al Omari", "Aisha Al Khiary", "Fatima Al Masroori", "Salim Al Habsi"]}</script>
+<script id="app-code">
+(function () {
+  'use strict';
+  var TITLE = 'Daily Assignment Board';
+  var FONTS = 'https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap';
+  var RESET = ':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}';
+  var MAMMOTH = 'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js';
+  var XLSXURL = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var PH = [['ref', 'Referrals + IPASS', 'External & Internal'], ['cr1', 'CR1', ''], ['cr2', 'CR2', ''], ['chamber', 'Chamber Room', '']];
+  var ROLES = ['Team leader', 'Assessment', 'Treatment', 'Operator', 'Attendant', 'Help'];
+
+  var PROMPT_PH = [
+    'You are reading a hospital physicians duty roster. For each working day (Sunday to Thursday) it says which physician covers four places: "Combined Referrals (Ext & Int) with IPASS", "CR1", "CR2" and "Chamber Room". The year is given in the heading or starting date.',
+    'Reply with only one JSON object. Keys are ISO dates (YYYY-MM-DD). Each value is {"ref": "...", "cr1": "...", "cr2": "...", "chamber": "..."} where ref is the Combined Referrals with IPASS physician.',
+    'Copy names exactly as written, including the "Dr." prefix. Include every day in the document.',
+    'Example: {"2026-10-25":{"ref":"Dr. Adil","cr1":"Dr. Aisha","cr2":"Dr. Salha","chamber":"Dr. Fatma"}}'
+  ].join('\n');
+
+  var PROMPT_ST = [
+    'You are reading a hospital staff duty roster for one month, laid out as one block per week. Each block has a header with day names and dates (dd/mm/yyyy), then one row per staff member (names in the left column) where each cell is that person role on that day, then a "Daily on call" row with the people on call that day (for example "Mohammed& Aisha"). Friday and Saturday columns list only the people on call. If a cell has a handwritten or struck-through correction, use the corrected value.',
+    'Reply with only one JSON object. Keys are ISO dates (YYYY-MM-DD). Each value is {"roles": {...}, "onCall": [...]}.',
+    '- roles maps a role to the full staff name from the left column. Use exactly these role names: "Team leader", "Assessment", "Treatment", "Operator", "Attendant", "Help". If two people share a role that day, join their names with " & ". Leave out anyone whose cell says A/L, Course, Event or anything that is not one of those roles.',
+    '- onCall lists the people on call that day, as full names from the left column (match a first name such as "Mohammed" to "Mohammed Al Omari").',
+    'Include every date in the document, weekends too (weekend dates have an empty roles object).',
+    'Example: {"2026-11-01":{"roles":{"Team leader":"Hassan Al Yusufi","Attendant":"Asma Al Harthi"},"onCall":["Mohammed Al Omari","Aisha Al Khiary"]}}'
+  ].join('\n');
+
+  var S;
+  try { S = JSON.parse(document.getElementById('state').textContent); } catch (e) { S = {}; }
+  S.physicians = S.physicians || {};
+  S.staff = S.staff || {};
+  S.overrides = S.overrides || {};
+  S.people = S.people || [];
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  // Oman is UTC+4 all year, so the calendar date is computed by hand and does not depend on the TV's own time zone.
+  function nowM() { return new Date(Date.now() + 4 * 3600000); }
+  function keyOf(d) { return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); }
+  function todayKey() { return keyOf(nowM()); }
+  function parse(key) { var p = key.split('-'); return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); }
+
+  var viewKey = todayKey();
+  var following = true;
+
+  function ini(n) { var s = String(n).replace(/^Dr\.?\s*/i, '').trim(); return s ? s.charAt(0).toUpperCase() : '?'; }
+  function swap(ov, slot, base) { var r = ov.replace && ov.replace[slot]; return r ? { n: r, r: true, b: base } : { n: base, r: false, b: base }; }
+  function repTag(x) { return x.r ? '<div class="rep">Replacement<span> for ' + esc(x.b) + '</span></div>' : ''; }
+  function pills(arr) { return arr.map(function (n) { return '<span class="pill">' + esc(n) + '</span>'; }).join(''); }
+  function countNames(roles) {
+    var n = 0;
+    ROLES.forEach(function (r) { if (roles[r]) n += String(roles[r]).split(/\s*&\s*/).length; });
+    return n;
+  }
+
+  function onCallBlock(st) {
+    if (!st || !st.onCall || !st.onCall.length) return '';
+    return '<section class="oncall"><h2 class="sec">On call</h2>' + pills(st.onCall) + '</section>';
+  }
+
+  function render() {
+    var key = viewKey, ov = S.overrides[key] || {}, ph = S.physicians[key], st = S.staff[key];
+    var d = parse(key), wd = d.getUTCDay();
+    var weekend = (wd === 5 || wd === 6);
+    var dateN = d.getUTCDate() + ' ' + MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+    var cnt = null;
+    if (ov.count !== undefined && ov.count !== null && ov.count !== '') cnt = ov.count;
+    else if (st && st.roles && countNames(st.roles)) cnt = countNames(st.roles);
+
+    var h = '<header class="top"><div><div class="eyebrow">NHMC &middot; Daily Assignment</div><h1 class="day">' + DAYS[wd] + '</h1><div class="date">' + esc(dateN) + (following ? '' : '<span class="viewing">Viewing another day</span>') + '</div></div>';
+    h += '<div class="side"><div class="clockbox"><div class="clock" id="clock"></div><div class="clock-l">Oman time</div></div><div class="count"><div class="num">' + (cnt === null ? '&mdash;' : esc(cnt)) + '</div><div class="lbl">Staff on duty</div></div></div></header>';
+    if (ov.note) h += '<div class="note">' + esc(ov.note) + '</div>';
+
+    if (weekend) {
+      h += '<section><div class="wk">Weekend</div><div class="empty">No physician roster on Fridays and Saturdays.</div></section>';
+    } else {
+      h += '<section><h2 class="sec">Physicians</h2>';
+      if (ph) {
+        h += '<div class="rooms">' + PH.map(function (p) {
+          var x = swap(ov, 'ph:' + p[0], ph[p[0]]);
+          return '<article class="room' + (p[0] === 'ref' ? ' room--lead' : '') + '"><div><div class="room-n">' + esc(p[1]) + '</div>' + (p[2] ? '<span class="room-s">' + esc(p[2]) + '</span>' : '') + '</div><div class="who"><span class="ring">' + esc(ini(x.n)) + '</span><span class="nm">' + esc(x.n) + '</span></div>' + repTag(x) + '</article>';
+        }).join('') + '</div>';
+      } else {
+        h += '<div class="empty">Physician roster not published for this date.</div>';
+      }
+      h += '</section>';
+      if (st && st.roles) {
+        var cells = ROLES.filter(function (r) { return st.roles[r]; }).map(function (r) {
+          var x = swap(ov, 'st:' + r, st.roles[r]);
+          return '<div class="role"><div class="role-n">' + esc(r) + '</div><div class="role-w">' + esc(x.n) + '</div>' + repTag(x) + '</div>';
+        });
+        if (cells.length) h += '<section><h2 class="sec">Nursing Team</h2><div class="team">' + cells.join('') + '</div></section>';
+      }
+    }
+    h += onCallBlock(st);
+    $('app').innerHTML = h;
+    tick();
+  }
+
+  function tick() {
+    var c = $('clock');
+    if (c) { var n = nowM(), hh = n.getUTCHours(); c.innerHTML = (hh % 12 || 12) + ':' + pad(n.getUTCMinutes()) + '<span class="sec">:' + pad(n.getUTCSeconds()) + '</span><span class="ap">' + (hh >= 12 ? 'PM' : 'AM') + '</span>'; }
+    if (following) { var t = todayKey(); if (t !== viewKey) { viewKey = t; render(); } }
+  }
+
+  function applyTheme() {
+    var h = (location.hash || '').replace('#', '');
+    if (h === 'dark') document.documentElement.setAttribute('data-board', 'dark');
+    else document.documentElement.removeAttribute('data-board');
+  }
+
+  // ---- Reading monthly roster files (editor only) ----
+  function loadScript(src, glob) {
+    return new Promise(function (resolve, reject) {
+      if (window[glob]) return resolve();
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject({ code: 'load' }); };
+      document.head.appendChild(s);
+    });
+  }
+
+  function extract(file, imagesOk) {
+    var name = (file.name || '').toLowerCase(), type = file.type || '';
+    if (/^image\//.test(type) || /\.(jpe?g|png|webp|gif)$/.test(name)) {
+      return imagesOk ? Promise.resolve({ image: file }) : Promise.reject({ code: 'noimg' });
+    }
+    if (/\.docx$/.test(name)) {
+      return loadScript(MAMMOTH, 'mammoth').then(function () { return file.arrayBuffer(); })
+        .then(function (b) { return window.mammoth.convertToHtml({ arrayBuffer: b }); })
+        .then(function (r) { return { text: r.value }; });
+    }
+    if (/\.(xlsx|xls|csv)$/.test(name)) {
+      return loadScript(XLSXURL, 'XLSX').then(function () { return file.arrayBuffer(); })
+        .then(function (b) {
+          var wb = window.XLSX.read(b, { type: 'array' });
+          return { text: wb.SheetNames.map(function (n) { return 'Sheet: ' + n + '\n' + window.XLSX.utils.sheet_to_csv(wb.Sheets[n]); }).join('\n\n') };
+        });
+    }
+    if (/\.(txt|md)$/.test(name)) return file.text().then(function (t) { return { text: t }; });
+    return Promise.reject({ code: 'type' });
+  }
+
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function str(v) { return (typeof v === 'string' ? v : '').trim(); }
+  function cleanPh(o) {
+    var out = {}, n = 0;
+    Object.keys(o || {}).forEach(function (k) {
+      var v = o[k];
+      if (!DATE_RE.test(k) || !v || typeof v !== 'object') return;
+      var r = { ref: str(v.ref), cr1: str(v.cr1), cr2: str(v.cr2), chamber: str(v.chamber) };
+      if (r.ref && r.cr1 && r.cr2 && r.chamber) { out[k] = r; n++; }
+    });
+    return { data: out, n: n };
+  }
+  function cleanSt(o) {
+    var out = {}, n = 0;
+    Object.keys(o || {}).forEach(function (k) {
+      var v = o[k];
+      if (!DATE_RE.test(k) || !v || typeof v !== 'object') return;
+      var roles = {};
+      ROLES.forEach(function (r) {
+        var x = v.roles && v.roles[r];
+        if (Array.isArray(x)) x = x.join(' & ');
+        x = str(x);
+        if (x) roles[r] = x;
+      });
+      var oc = (Array.isArray(v.onCall) ? v.onCall : []).map(str).filter(Boolean);
+      if (Object.keys(roles).length || oc.length) { out[k] = { roles: roles, onCall: oc }; n++; }
+    });
+    return { data: out, n: n };
+  }
+
+  function dayHead(k) { var p = parse(k); return DAYS[p.getUTCDay()].slice(0, 3) + ' ' + p.getUTCDate() + ' ' + MONTHS[p.getUTCMonth()].slice(0, 3); }
+  function previewHtml(kind, d) {
+    var keys = Object.keys(d).sort();
+    var lines = keys.map(function (k) {
+      var v = d[k];
+      if (kind === 'ph') return '<div><b>' + dayHead(k) + '</b> Referrals ' + esc(v.ref) + ' &middot; CR1 ' + esc(v.cr1) + ' &middot; CR2 ' + esc(v.cr2) + ' &middot; Chamber ' + esc(v.chamber) + '</div>';
+      var parts = ROLES.filter(function (r) { return v.roles[r]; }).map(function (r) { return esc(r) + ': ' + esc(v.roles[r]); });
+      return '<div><b>' + dayHead(k) + '</b> ' + (parts.length ? parts.join(' &middot; ') : 'No team roles') + (v.onCall.length ? ' &middot; <i>On call: ' + esc(v.onCall.join(', ')) + '</i>' : '') + '</div>';
+    });
+    return '<p class="hint">' + keys.length + ' days found, ' + dayHead(keys[0]) + ' to ' + dayHead(keys[keys.length - 1]) + '. Check the names, then press Save rosters.</p><div class="prev">' + lines.join('') + '</div>';
+  }
+
+  function errCopy(e) {
+    var c = e && e.code;
+    if (c === 'type') return 'This file type is not supported. Use a Word, Excel or CSV file, or a photo.';
+    if (c === 'noimg') return 'Photos are not available in this view. Use the Word or Excel file.';
+    if (c === 'load') return 'Could not load the file reader. Check the internet connection and try again.';
+    if (c === 'not_granted') return 'Claude access was declined, so the file cannot be read.';
+    if (c === 'invalid_json' || c === 'empty_completion') return 'Claude could not turn that file into a roster. Try the Word file or a clearer photo.';
+    if (c === 'image_rejected') return 'That image could not be used. Try another one.';
+    if (c === 'rate_limited') return 'Too many requests. Wait a minute and choose the file again.';
+    if (c === 'prompt_too_large') return 'The file is too large. Send only the month you need.';
+    return 'Could not read the file. Try again.';
+  }
+
+  // ---- Saving and editing (only for a signed-in writer; the TV never sees these controls) ----
+  function buildDoc() {
+    var css = $('app-css').textContent, code = $('app-code').textContent;
+    var json = JSON.stringify(S).replace(/</g, '\\u003c');
+    var o = '<' + 'script', c = '<' + '/script>';
+    return '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' + RESET + '</style></head><body>' +
+      '<meta name="claude:viewport-fit-sides" content="cover"><title>' + TITLE + '</title><link rel="stylesheet" href="' + FONTS + '"><style id="app-css">' + css + '</style>' +
+      '<div id="app"></div><div id="tools"></div>' +
+      o + ' id="state" type="application/json">' + json + c + o + ' id="app-code">' + code + c + '</body></html>';
+  }
+
+  function enableEdit(art, sample, imagesOk, hideFab) {
+    var t = $('tools');
+    var upload = sample ?
+      '<hr><h3>Monthly rosters</h3>' +
+      '<p class="hint">Upload each roster separately. Word or Excel files are read most accurately; a photo also works.</p>' +
+      '<div><label for="up-ph">Physicians roster</label><input type="file" id="up-ph" accept="image/*,.docx,.xlsx,.xls,.csv,.txt"><div class="upmsg" id="msg-ph" aria-live="polite"></div><div id="prev-ph"></div></div>' +
+      '<div><label for="up-st">Nurses roster</label><input type="file" id="up-st" accept="image/*,.docx,.xlsx,.xls,.csv,.txt"><div class="upmsg" id="msg-st" aria-live="polite"></div><div id="prev-st"></div></div>' +
+      '<div class="actions"><button class="btn btn--main" id="up-save" type="button" hidden>Save rosters</button><span id="up-status" aria-live="polite"></span></div>' : '';
+    t.innerHTML = '<button class="fab' + (art ? '' : ' fab--local') + '" id="fab" type="button">Edit</button>' +
+      '<div class="sheet" id="sheet" hidden><div class="sheet-in">' +
+      '<h3>Today on the screen</h3>' +
+      '<div><label for="ed-date">Date</label><input type="date" id="ed-date"></div>' +
+      '<div><label for="ed-count">Staff on duty</label><input type="number" id="ed-count" min="0" inputmode="numeric"></div>' +
+      '<div><label for="ed-note">Message on screen</label><input type="text" id="ed-note" maxlength="140" placeholder="Optional"></div>' +
+      '<h3>Replacements</h3><div id="ed-slots" style="display:flex;flex-direction:column;gap:12px"></div>' +
+      '<datalist id="people">' + S.people.map(function (p) { return '<option value="' + esc(p) + '">'; }).join('') + '</datalist>' +
+      '<div class="actions"><button class="btn btn--main" id="ed-save" type="button">Save</button><button class="btn" id="ed-close" type="button">Close</button><span id="ed-status" aria-live="polite"></span></div>' +
+      upload + '</div></div>';
+
+    var pending = {};
+    function status(m) { $('ed-status').textContent = m; }
+
+    function persist(setMsg) {
+      if (!art) {
+        try { localStorage.setItem('duty-board-overrides', JSON.stringify(S.overrides)); setMsg('Saved on this device'); } catch (e) { setMsg('This browser cannot save here.'); }
+        render();
+        return;
+      }
+      setMsg('Saving...');
+      art.publish(buildDoc()).then(function () { setMsg('Saved'); }).catch(function (e) {
+        var code = e && e.code;
+        if (code === 'conflict') return;
+        if (code === 'not_writer' || code === 'not_granted' || code === 'not_declared' || code === 'consent_required' || code === 'capability_disabled' || code === 'capability_removed') {
+          setMsg('This view cannot save changes.'); $('fab').hidden = true;
+        } else if (code === 'rate_limited') setMsg('Too many saves. Wait a moment and try again.');
+        else setMsg('Could not save. Try again.');
+      });
+    }
+
+    function fill() {
+      var key = viewKey, ov = S.overrides[key] || {}, rows = [], ph = S.physicians[key], st = S.staff[key];
+      if (ph) PH.forEach(function (p) { rows.push(['ph:' + p[0], p[1], ph[p[0]]]); });
+      if (st && st.roles) ROLES.forEach(function (r) { if (st.roles[r]) rows.push(['st:' + r, r, st.roles[r]]); });
+      $('ed-slots').innerHTML = rows.length ? rows.map(function (r, i) {
+        return '<div><label for="rp' + i + '">' + esc(r[1]) + ' &middot; <span>' + esc(r[2]) + '</span></label><input id="rp' + i + '" data-slot="' + esc(r[0]) + '" list="people" placeholder="Replace with" value="' + esc((ov.replace && ov.replace[r[0]]) || '') + '"></div>';
+      }).join('') : '<p class="hint">No assignments on this date.</p>';
+      $('ed-count').value = (ov.count !== undefined && ov.count !== null) ? ov.count : '';
+      $('ed-note').value = ov.note || '';
+      $('ed-date').value = key;
+      status('');
+    }
+
+    $('fab').addEventListener('click', function () { var s = $('sheet'); s.hidden = !s.hidden; if (!s.hidden) fill(); });
+    $('ed-close').addEventListener('click', function () { $('sheet').hidden = true; });
+    $('ed-date').addEventListener('change', function () {
+      var v = $('ed-date').value; if (!v) return;
+      viewKey = v; following = (v === todayKey()); render(); fill();
+    });
+    $('ed-save').addEventListener('click', function () {
+      var key = viewKey, o = {};
+      var c = $('ed-count').value.trim(); if (c !== '') o.count = Math.max(0, parseInt(c, 10) || 0);
+      var note = $('ed-note').value.trim(); if (note) o.note = note;
+      var rep = {}, n = 0;
+      Array.prototype.forEach.call($('sheet').querySelectorAll('[data-slot]'), function (i) { var v = i.value.trim(); if (v) { rep[i.getAttribute('data-slot')] = v; n++; } });
+      if (n) o.replace = rep;
+      if (Object.keys(o).length) S.overrides[key] = o; else delete S.overrides[key];
+      var cutoff = keyOf(new Date(parse(todayKey()).getTime() - 45 * 864e5));
+      Object.keys(S.overrides).forEach(function (k) { if (k < cutoff) delete S.overrides[k]; });
+      persist(status);
+    });
+
+    if (!sample) return;
+    function refreshSave() { $('up-save').hidden = !(pending.ph || pending.st); }
+    function wire(kind) {
+      var inp = $('up-' + kind), msg = $('msg-' + kind);
+      inp.addEventListener('change', function () {
+        var f = inp.files && inp.files[0];
+        delete pending[kind]; $('prev-' + kind).innerHTML = ''; refreshSave();
+        if (!f) return;
+        msg.textContent = 'Reading the file...';
+        extract(f, imagesOk).then(function (ex) {
+          msg.textContent = 'Claude is reading the table. This can take a minute.';
+          var input = (kind === 'ph' ? PROMPT_PH : PROMPT_ST) + (ex.text ? '\n\nDOCUMENT CONTENT:\n' + ex.text.slice(0, 200000) : '\n\nThe document is the attached image.');
+          var opts = { modelTier: 'default' };
+          if (ex.image) opts.images = ex.image;
+          return sample.json(input, opts);
+        }).then(function (val) {
+          var r = (kind === 'ph' ? cleanPh : cleanSt)(val);
+          if (!r.n) { msg.textContent = 'No days were found in that file. Try the Word file or a clearer photo.'; return; }
+          pending[kind] = r.data;
+          msg.textContent = '';
+          $('prev-' + kind).innerHTML = previewHtml(kind, r.data);
+          refreshSave();
+        }).catch(function (e) { msg.textContent = errCopy(e); });
+      });
+    }
+    wire('ph'); wire('st');
+    $('up-save').addEventListener('click', function () {
+      var names = {};
+      S.people.forEach(function (p) { names[p] = 1; });
+      if (pending.ph) Object.keys(pending.ph).forEach(function (k) {
+        S.physicians[k] = pending.ph[k];
+        [pending.ph[k].ref, pending.ph[k].cr1, pending.ph[k].cr2, pending.ph[k].chamber].forEach(function (n) { names[n] = 1; });
+      });
+      if (pending.st) Object.keys(pending.st).forEach(function (k) {
+        S.staff[k] = pending.st[k];
+        ROLES.forEach(function (r) { var v = pending.st[k].roles[r]; if (v) v.split(/\s*&\s*/).forEach(function (n) { names[n] = 1; }); });
+        pending.st[k].onCall.forEach(function (n) { names[n] = 1; });
+      });
+      S.people = Object.keys(names);
+      persist(function (m) { $('up-status').textContent = m; });
+    });
+  }
+
+  // Outside Claude (a downloaded copy) the daily edits live in this browser's own storage.
+  function loadLocal() {
+    try {
+      var o = JSON.parse(localStorage.getItem('duty-board-overrides') || '{}');
+      if (o && typeof o === 'object') Object.keys(o).forEach(function (k) { S.overrides[k] = o[k]; });
+    } catch (e) {}
+  }
+
+  function init() {
+    applyTheme();
+    window.addEventListener('hashchange', applyTheme);
+    render();
+    setInterval(tick, 1000);
+    try {
+      var c = window.claude;
+      if (!c || !c.use) { loadLocal(); render(); enableEdit(null, null, false); return; }
+      Promise.all([c.use('artifact'), c.use('user'), c.use('sample')]).then(function (r) {
+        var art = r[0], user = r[1], sample = r[2];
+        if (!art || !user) return;
+        return user.canEdit().then(function (ok) {
+          if (!ok) return;
+          if (!sample) return enableEdit(art, null, false);
+          return sample.limits().then(function (l) { return !!(l && l.images); }, function () { return false; })
+            .then(function (imgOk) { enableEdit(art, sample, imgOk); });
+        });
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  init();
+})();
+</script>
+
+</body></html>
